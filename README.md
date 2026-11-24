@@ -2,9 +2,9 @@
 
 # Project & Portfolio 1
 
-### Student First & Last Name
+### Jacob DeLong
 
-Hello my name is [enter name]. I am a student from [where are you from?]. The purpose of this repository is to practice development using version control. This work will help me begin to build a portfolio of skills and accomplishment that can be shared in the future.
+Hello my name is Jacob DeLong. I am a student from South Carolina. The purpose of this repository is to practice development using version control. This work will help me begin to build a portfolio of skills and accomplishment that can be shared in the future.
 
 <br>
 
