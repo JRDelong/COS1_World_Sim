@@ -2,6 +2,17 @@
 #include <string>
 #include "World_Creation.h"
 
+void ClearScreen() {
+    // ANSI escape sequence: clears the screen and moves cursor to top-left (1,1)
+    std::cout << "\033[2J\033[1;1H";
+}
+
+void PauseForTurn() {
+    std::cout << "\nPress Enter to continue...";
+    std::string dummy;
+    std::getline(std::cin, dummy);
+}
+
 int ReadInt(const std::string& prompt) {
     while (true) {
         std::cout << prompt;
@@ -18,7 +29,8 @@ int ReadInt(const std::string& prompt) {
 }
 
 void HandleBiomeShop(World_Creation& world) {
-    std::cout << "\n--- BIOME CREATION CATALOG ---\n";
+    ClearScreen();
+    std::cout << "--- BIOME CREATION CATALOG ---\n";
     std::cout << "1. Verdant Canopy (Cost: 500 OP)\n";
     std::cout << "   Trait: Lush Ecosystem | Bonus: +40% Pop Growth | Flaw: -20% Civ Power\n";
     std::cout << "2. Volcanic Caldera (Cost: 700 OP)\n";
@@ -27,7 +39,7 @@ void HandleBiomeShop(World_Creation& world) {
     std::cout << "   Trait: Mana Saturated | Bonus: +35% Civ Power | Flaw: -25% Pop Cap\n";
     std::cout << "4. Sunken Archipelago (Cost: 600 OP)\n";
     std::cout << "   Trait: Vast Horizons | Bonus: +50% Pop Cap | Flaw: -15% Civ Power\n";
-    std::cout << "0. Cancel\n";
+    std::cout << "0. Cancel\n\n";
 
     int pick = ReadInt("Select a biome to manifest: ");
 
@@ -68,7 +80,8 @@ void HandleBiomeShop(World_Creation& world) {
 void HandleRaceShop(World_Creation& world) {
     int biomeIndex = ReadInt("Enter Biome Index [0, 1, ...] to awaken sentient life in: ");
 
-    std::cout << "\n--- SENTIENT RACE CATALOG ---\n";
+    ClearScreen();
+    std::cout << "--- SENTIENT RACE CATALOG (Target Biome: [" << biomeIndex << "]) ---\n";
     std::cout << "1. Sylvan Elves (Cost: 800 OP)\n";
     std::cout << "   Trait: Nature-Bound | Preferred Biome: Verdant Canopy\n";
     std::cout << "   Bonus: +35% Civ Power | Flaw: -15% Pop Growth\n";
@@ -81,7 +94,7 @@ void HandleRaceShop(World_Creation& world) {
     std::cout << "4. Tideborn Humans (Cost: 750 OP)\n";
     std::cout << "   Trait: Relentless Pioneers | Preferred Biome: Sunken Archipelago\n";
     std::cout << "   Bonus: +25% Pop Growth & +20% Era Speed | Flaw: -20% Civ Power\n";
-    std::cout << "0. Cancel\n";
+    std::cout << "0. Cancel\n\n";
 
     int pick = ReadInt("Select a race to awaken: ");
 
@@ -124,16 +137,18 @@ void HandleRaceShop(World_Creation& world) {
 }
 
 int main() {
+    ClearScreen();
     std::string worldName;
     std::cout << "Enter a name for your newly formed world: ";
     std::getline(std::cin, worldName);
 
-    // Start with 1,300 OP so the Overseer can manifest a starter biome + race synergy
     World_Creation myWorld(worldName, 1300);
 
     bool running = true;
     while (running) {
+        ClearScreen();
         myWorld.DisplayStatus();
+
         std::cout << "\n--- OVERSEER ACTIONS ---\n";
         std::cout << "1. Manifest Biome (Open Biome Catalog)\n";
         std::cout << "2. Upgrade Existing Biome\n";
@@ -148,34 +163,43 @@ int main() {
         switch (choice) {
         case 1:
             HandleBiomeShop(myWorld);
+            PauseForTurn();
             break;
         case 2: {
             int index = ReadInt("Enter Biome Index [0, 1, ...] to upgrade: ");
             myWorld.UpgradeBiome(index);
+            PauseForTurn();
             break;
         }
         case 3:
             HandleRaceShop(myWorld);
+            PauseForTurn();
             break;
         case 4:
             myWorld.AdvanceTime(1);
+            PauseForTurn();
             break;
         case 5:
             myWorld.AdvanceTime(10);
+            PauseForTurn();
             break;
         case 6:
+            ClearScreen();
             myWorld.DisplayAchievements();
+            PauseForTurn();
             break;
         case 0:
             running = false;
             break;
         default:
             std::cout << "\n[!] Unknown command.\n";
+            PauseForTurn();
             break;
         }
     }
 
     return 0;
 }
+
 
 
