@@ -31,6 +31,8 @@ public:
     bool SeedSentientRace(int biomeIndex, const Race& newRace, unsigned long long cost);
     void DisplayStatus() const;
     void DisplayAchievements() const;
+    unsigned long long GetOverseerPoints() const { return m_overseerPoints; }
+
 };
 
 

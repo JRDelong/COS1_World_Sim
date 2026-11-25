@@ -1,11 +1,13 @@
 #include <iostream>
 #include <string>
 #include "World_Creation.h"
+#include <cstdlib>
+
 
 void ClearScreen() {
-    // ANSI escape sequence: clears the screen and moves cursor to top-left (1,1)
-    std::cout << "\033[2J\033[1;1H";
+    std::system("cls");
 }
+
 
 void PauseForTurn() {
     std::cout << "\nPress Enter to continue...";
@@ -30,7 +32,9 @@ int ReadInt(const std::string& prompt) {
 
 void HandleBiomeShop(World_Creation& world) {
     ClearScreen();
-    std::cout << "--- BIOME CREATION CATALOG ---\n";
+    std::cout << "======================================================\n";
+    std::cout << " BIOME CREATION CATALOG | Available: " << world.GetOverseerPoints() << " OP\n";
+    std::cout << "======================================================\n";
     std::cout << "1. Verdant Canopy (Cost: 500 OP)\n";
     std::cout << "   Trait: Lush Ecosystem | Bonus: +40% Pop Growth | Flaw: -20% Civ Power\n";
     std::cout << "2. Volcanic Caldera (Cost: 700 OP)\n";
@@ -42,6 +46,8 @@ void HandleBiomeShop(World_Creation& world) {
     std::cout << "0. Cancel\n\n";
 
     int pick = ReadInt("Select a biome to manifest: ");
+    // ... rest of switch(pick) stays the same
+
 
     switch (pick) {
     case 1:
@@ -81,7 +87,10 @@ void HandleRaceShop(World_Creation& world) {
     int biomeIndex = ReadInt("Enter Biome Index [0, 1, ...] to awaken sentient life in: ");
 
     ClearScreen();
-    std::cout << "--- SENTIENT RACE CATALOG (Target Biome: [" << biomeIndex << "]) ---\n";
+    std::cout << "======================================================\n";
+    std::cout << " SENTIENT RACE CATALOG | Target Biome: [" << biomeIndex << "]\n";
+    std::cout << " Available Overseer Points: " << world.GetOverseerPoints() << " OP\n";
+    std::cout << "======================================================\n";
     std::cout << "1. Sylvan Elves (Cost: 800 OP)\n";
     std::cout << "   Trait: Nature-Bound | Preferred Biome: Verdant Canopy\n";
     std::cout << "   Bonus: +35% Civ Power | Flaw: -15% Pop Growth\n";
@@ -97,6 +106,8 @@ void HandleRaceShop(World_Creation& world) {
     std::cout << "0. Cancel\n\n";
 
     int pick = ReadInt("Select a race to awaken: ");
+    // ... rest of switch(pick) stays the same
+
 
     switch (pick) {
     case 1:
@@ -136,16 +147,9 @@ void HandleRaceShop(World_Creation& world) {
     }
 }
 
-int main() {
-    ClearScreen();
-    std::string worldName;
-    std::cout << "Enter a name for your newly formed world: ";
-    std::getline(std::cin, worldName);
-
-    World_Creation myWorld(worldName, 1300);
-
-    bool running = true;
-    while (running) {
+void RunSimulationLoop(World_Creation& myWorld) {
+    bool inGame = true;
+    while (inGame) {
         ClearScreen();
         myWorld.DisplayStatus();
 
@@ -155,8 +159,8 @@ int main() {
         std::cout << "3. Awaken Sentient Race (Open Race Catalog)\n";
         std::cout << "4. Advance Time (1 Epoch)\n";
         std::cout << "5. Fast-Forward Time (10 Epochs)\n";
-        std::cout << "6. View Overseer Achievements\n";
-        std::cout << "0. Exit Simulation\n";
+        std::cout << "6. View Current World Achievements\n";
+        std::cout << "0. Return to Main Menu\n";
 
         int choice = ReadInt("Choose an action: ");
 
@@ -189,7 +193,7 @@ int main() {
             PauseForTurn();
             break;
         case 0:
-            running = false;
+            inGame = false;
             break;
         default:
             std::cout << "\n[!] Unknown command.\n";
@@ -197,9 +201,74 @@ int main() {
             break;
         }
     }
+}
+
+int main() {
+    std::string activeProfileName = "None (Guest Overseer)";
+    bool appRunning = true;
+    bool firstScreen = true;
+
+    while (appRunning) {
+        if (!firstScreen) {
+            ClearScreen();
+        }
+        firstScreen = false;
+
+        std::cout << "======================================================\n";
+        std::cout << "                 OVERSEER: WORLD SIM                  \n";
+        std::cout << "======================================================\n";
+        std::cout << " Active Profile: " << activeProfileName << "\n";
+        std::cout << "======================================================\n\n";
+        std::cout << "1. Start New Game\n";
+        std::cout << "2. Load Saved Game\n";
+        std::cout << "3. Create or Load Overseer Profile\n";
+        std::cout << "4. View Profile Unlocked Achievements\n";
+        std::cout << "0. Exit Application\n\n";
+
+        int menuChoice = ReadInt("Select an option: ");
+
+        switch (menuChoice) {
+        case 1: {
+            ClearScreen();
+            std::string worldName;
+            std::cout << "Enter a name for your newly formed world: ";
+            std::getline(std::cin, worldName);
+
+            World_Creation newWorld(worldName, 1300);
+            RunSimulationLoop(newWorld);
+            break;
+        }
+        case 2:
+            ClearScreen();
+            std::cout << "--- LOAD SAVED GAME ---\n";
+            std::cout << "[Menu placeholder - Save file loading not yet implemented.]\n";
+            PauseForTurn();
+            break;
+        case 3:
+            ClearScreen();
+            std::cout << "--- OVERSEER PROFILE ---\n";
+            std::cout << "[Menu placeholder - Profile creation/loading not yet implemented.]\n";
+            PauseForTurn();
+            break;
+        case 4:
+            ClearScreen();
+            std::cout << "--- PROFILE ACHIEVEMENTS (" << activeProfileName << ") ---\n";
+            std::cout << "[Menu placeholder - Profile achievement tracking not yet implemented.]\n";
+            PauseForTurn();
+            break;
+        case 0:
+            appRunning = false;
+            break;
+        default:
+            std::cout << "\n[!] Unknown menu option.\n";
+            PauseForTurn();
+            break;
+        }
+    }
 
     return 0;
 }
+
 
 
 
