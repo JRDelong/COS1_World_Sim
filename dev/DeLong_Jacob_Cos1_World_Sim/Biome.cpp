@@ -5,7 +5,7 @@ Biome::Biome(const std::string& name,
     const std::string& bonusDesc,
     const std::string& flawDesc,
     unsigned long long habitability,
-    int energyModifierPercent,
+    int prosperityModifierPercent,
     int capModifierPercent)
     : m_name(name),
     m_trait(trait),
@@ -14,7 +14,7 @@ Biome::Biome(const std::string& name,
     m_tier(1),
     m_wildLifePop(10),
     m_habitability(habitability),
-    m_energyModifierPercent(energyModifierPercent),
+    m_prosperityModifierPercent(prosperityModifierPercent),
     m_capModifierPercent(capModifierPercent) {
 }
 
@@ -29,7 +29,6 @@ unsigned long long Biome::GetPopulationCap() const {
 void Biome::ProcessTick() {
     unsigned long long cap = GetPopulationCap();
 
-    // Grow baseline wildlife/ecosystem
     if (m_wildLifePop < cap) {
         unsigned long long growth = (m_wildLifePop * m_habitability) / 100;
         if (growth == 0) growth = 1;
@@ -39,18 +38,17 @@ void Biome::ProcessTick() {
         }
     }
 
-    // Grow sentient civilization if present
     if (!m_races.empty()) {
         m_races.front().ProcessTick(m_habitability, cap);
     }
 }
 
-unsigned long long Biome::CalculateEnergyYield() const {
-    unsigned long long yield = (m_wildLifePop / 5) * m_tier;
+unsigned long long Biome::CalculateBiomePower() const {
+    unsigned long long power = (m_wildLifePop / 5) * m_tier;
     if (!m_races.empty()) {
-        yield += m_races.front().CalculateEnergyYield(m_name);
+        power += m_races.front().CalculateCivPower(m_name);
     }
-    return (yield * m_energyModifierPercent) / 100;
+    return (power * m_prosperityModifierPercent) / 100;
 }
 
 unsigned long long Biome::GetUpgradeCost() const {
@@ -74,6 +72,18 @@ bool Biome::SeedRace(const Race& newRace) {
     return true;
 }
 
+unsigned long long Biome::GetSentientPop() const {
+    return m_races.empty() ? 0 : m_races.front().GetPopulation();
+}
+
+int Biome::GetSentientCivLevel() const {
+    return m_races.empty() ? 0 : m_races.front().GetCivLevel();
+}
+
+bool Biome::IsRaceInPreferredBiome() const {
+    return !m_races.empty() && (m_races.front().GetPreferredBiome() == m_name);
+}
+
 std::string Biome::GetRaceSummary() const {
     if (m_races.empty()) {
         return "None (Uninhabited Wilderness)";
@@ -84,5 +94,6 @@ std::string Biome::GetRaceSummary() const {
         " (Pop: " + std::to_string(r.GetPopulation()) + ")" + harmony +
         "\n       Race Bonus: " + r.GetBonusDesc() + " | Race Flaw: " + r.GetFlawDesc();
 }
+
 
 

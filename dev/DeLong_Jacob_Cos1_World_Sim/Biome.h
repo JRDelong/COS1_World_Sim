@@ -12,8 +12,8 @@ private:
     int m_tier;
     unsigned long long m_wildLifePop;
     unsigned long long m_habitability;
-    int m_energyModifierPercent; // e.g., 150 = +50% energy yield, 80 = -20% energy yield
-    int m_capModifierPercent;    // e.g., 100 = normal cap, 60 = -40% pop cap
+    int m_prosperityModifierPercent;
+    int m_capModifierPercent;
     std::vector<Race> m_races;
 
 public:
@@ -22,19 +22,22 @@ public:
         const std::string& bonusDesc,
         const std::string& flawDesc,
         unsigned long long habitability,
-        int energyModifierPercent,
+        int prosperityModifierPercent,
         int capModifierPercent);
 
     void ProcessTick();
-    unsigned long long CalculateEnergyYield() const;
+    unsigned long long CalculateBiomePower() const;
     unsigned long long GetUpgradeCost() const;
     unsigned long long GetPopulationCap() const;
     bool UpgradeTier();
 
     // Sentient Life Methods
     bool HasSentientRace() const { return !m_races.empty(); }
-    bool SeedRace(const Race& newRace;
+    bool SeedRace(const Race& newRace);
     std::string GetRaceSummary() const;
+    unsigned long long GetSentientPop() const;
+    int GetSentientCivLevel() const;
+    bool IsRaceInPreferredBiome() const;
 
     // Getters
     std::string GetName() const { return m_name; }
@@ -44,5 +47,6 @@ public:
     int GetTier() const { return m_tier; }
     unsigned long long GetWildLifePop() const { return m_wildLifePop; }
 };
+
 
 

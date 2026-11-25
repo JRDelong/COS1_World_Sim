@@ -11,9 +11,9 @@ private:
     unsigned long long m_population;
     int m_civLevel;
     unsigned long long m_devPoints;
-    int m_growthBonusPercent;   // e.g., +20 or -15
-    int m_devSpeedPercent;      // e.g., 150 = +50% faster era progress, 80 = -20% slower
-    int m_energyYieldPercent;   // e.g., 150 = +50% energy yield, 85 = -15% energy yield
+    int m_growthBonusPercent;
+    int m_devSpeedPercent;
+    int m_prosperityPercent; // Formerly energyYieldPercent; boosts Civilization Power
 
 public:
     Race(const std::string& name,
@@ -23,10 +23,10 @@ public:
         const std::string& preferredBiome,
         int growthBonusPercent,
         int devSpeedPercent,
-        int energyYieldPercent);
+        int prosperityPercent);
 
     void ProcessTick(unsigned long long biomeHabitability, unsigned long long popCap);
-    unsigned long long CalculateEnergyYield(const std::string& currentBiomeName) const;
+    unsigned long long CalculateCivPower(const std::string& currentBiomeName) const;
     std::string GetCivEraName() const;
 
     // Getters
@@ -38,5 +38,6 @@ public:
     unsigned long long GetPopulation() const { return m_population; }
     int GetCivLevel() const { return m_civLevel; }
 };
+
 
 

@@ -7,7 +7,7 @@ Race::Race(const std::string& name,
     const std::string& preferredBiome,
     int growthBonusPercent,
     int devSpeedPercent,
-    int energyYieldPercent)
+    int prosperityPercent)
     : m_name(name),
     m_trait(trait),
     m_bonusDesc(bonusDesc),
@@ -18,11 +18,10 @@ Race::Race(const std::string& name,
     m_devPoints(0),
     m_growthBonusPercent(growthBonusPercent),
     m_devSpeedPercent(devSpeedPercent),
-    m_energyYieldPercent(energyYieldPercent) {
+    m_prosperityPercent(prosperityPercent) {
 }
 
 void Race::ProcessTick(unsigned long long biomeHabitability, unsigned long long popCap) {
-    // 1. Population Growth (clamped to minimum 5% so negative flaws never stall completely)
     int effectiveRate = static_cast<int>(biomeHabitability) + m_growthBonusPercent;
     if (effectiveRate < 5) {
         effectiveRate = 5;
@@ -37,13 +36,11 @@ void Race::ProcessTick(unsigned long long biomeHabitability, unsigned long long 
         }
     }
 
-    // 2. Civilization Development
     unsigned long long baseDev = (m_population / 20) + 5;
     unsigned long long devGain = (baseDev * static_cast<unsigned long long>(m_devSpeedPercent)) / 100;
     if (devGain == 0) devGain = 1;
     m_devPoints += devGain;
 
-    // 3. Era Advancement
     unsigned long long nextEraThreshold = 500;
     for (int i = 1; i < m_civLevel; ++i) {
         nextEraThreshold *= 5;
@@ -55,15 +52,15 @@ void Race::ProcessTick(unsigned long long biomeHabitability, unsigned long long 
     }
 }
 
-unsigned long long Race::CalculateEnergyYield(const std::string& currentBiomeName) const {
-    unsigned long long baseYield = (m_population / 2) * static_cast<unsigned long long>(m_civLevel);
-    unsigned long long modifiedYield = (baseYield * static_cast<unsigned long long>(m_energyYieldPercent)) / 100;
+unsigned long long Race::CalculateCivPower(const std::string& currentBiomeName) const {
+    unsigned long long basePower = (m_population / 2) * static_cast<unsigned long long>(m_civLevel);
+    unsigned long long modifiedPower = (basePower * static_cast<unsigned long long>(m_prosperityPercent)) / 100;
 
     // +25% Harmony Bonus when placed in their Preferred Biome
     if (currentBiomeName == m_preferredBiome) {
-        modifiedYield = (modifiedYield * 125) / 100;
+        modifiedPower = (modifiedPower * 125) / 100;
     }
-    return modifiedYield;
+    return modifiedPower;
 }
 
 std::string Race::GetCivEraName() const {
@@ -76,3 +73,4 @@ std::string Race::GetCivEraName() const {
     default: return "Unknown Era";
     }
 }
+
