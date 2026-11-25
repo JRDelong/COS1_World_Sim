@@ -17,7 +17,7 @@ public:
     void AdvanceTime(int ticks = 1);
     bool CreateBiome(const Biome& newBiome, unsigned long long cost);
     bool UpgradeBiome(int index);
-    bool SeedSentientRace(int biomeIndex, const std::string& raceName, const std::string& trait, unsigned long long cost);
+    bool SeedSentientRace(int biomeIndex, const Race& newRace, unsigned long long cost);
     void DisplayStatus() const;
 };
 

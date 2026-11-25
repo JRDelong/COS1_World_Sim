@@ -41,7 +41,7 @@ bool World_Creation::UpgradeBiome(int index) {
 	return true;
 }
 
-bool World_Creation::SeedSentientRace(int biomeIndex, const std::string& raceName, const std::string& trait, unsigned long long cost) {
+bool World_Creation::SeedSentientRace(int biomeIndex, const Race& newRace, unsigned long long cost) {
 	if (m_biomes.empty()) {
 		std::cout << "\n[!] No biomes exist yet. Manifest a biome first!\n";
 		return false;
@@ -55,16 +55,19 @@ bool World_Creation::SeedSentientRace(int biomeIndex, const std::string& raceNam
 		return false;
 	}
 	if (m_worldEnergy < cost) {
-		std::cout << "\n[!] Not enough World Energy! Awakening sentient life requires " << cost << " Energy.\n";
+		std::cout << "\n[!] Not enough World Energy! Awakening " << newRace.GetName()
+			<< " requires " << cost << " Energy.\n";
 		return false;
 	}
 
 	m_worldEnergy -= cost;
-	m_biomes[biomeIndex].SeedRace(raceName, trait);
-	std::cout << "\n[+] Sparked Sentient Life! The " << raceName << " (" << trait << ") have awakened in "
+	m_biomes[biomeIndex].SeedRace(newRace);
+	std::cout << "\n[+] Sparked Sentient Life! The " << newRace.GetName()
+		<< " (" << newRace.GetTrait() << ") have awakened in "
 		<< m_biomes[biomeIndex].GetName() << "!\n";
 	return true;
 }
+
 
 bool World_Creation::CreateBiome(const Biome& newBiome, unsigned long long cost) {
 	if (m_worldEnergy < cost) {
