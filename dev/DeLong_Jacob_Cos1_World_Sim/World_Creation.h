@@ -1,5 +1,24 @@
 #pragma once
+#include <string>
+#include <vector>
+#include "Biome.h"
+
+
 class World_Creation
 {
+private:
+	std::string m_worldName;
+	int m_worldEra;
+	unsigned long long m_worldEnergy;
+	unsigned long long m_tickCount;
+	std::vector<Biome> m_biomes;
+
+public:
+	World_Creation(const std::string& name, unsigned long long startingEnergy);
+
+	void AdvanceTime(int ticks = 1);
+	bool CreateBiome(const std::string& name, unsigned long long habitability, unsigned long long cost);
+	bool UpgradeBiome(int index);
+	void DisplayStatus() const;
 };
 

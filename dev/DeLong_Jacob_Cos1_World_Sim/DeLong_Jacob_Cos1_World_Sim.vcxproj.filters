@@ -36,6 +36,12 @@
     <ClCompile Include="Sys_creation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Biome.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Race.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Player.h">
@@ -54,6 +60,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sys_creation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Biome.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Race.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

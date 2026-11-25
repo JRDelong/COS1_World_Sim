@@ -140,8 +140,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Achievement.cpp" />
+    <ClCompile Include="Biome.cpp" />
     <ClCompile Include="DeLong_Jacob_Cos1_World_Sim.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Race.cpp" />
     <ClCompile Include="Sim.cpp" />
     <ClCompile Include="Store.cpp" />
     <ClCompile Include="Sys_creation.cpp" />
@@ -149,7 +151,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Achievement.h" />
+    <ClInclude Include="Biome.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="Race.h" />
     <ClInclude Include="Sim.h" />
     <ClInclude Include="Store.h" />
     <ClInclude Include="Sys_creation.h" />
