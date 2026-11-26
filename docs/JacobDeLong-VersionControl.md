@@ -129,4 +129,4 @@ Replace the example references below with your own links and recommended resourc
 [Site Address](https://www.google.com)
 
 **Using .gitignore and Why it's Important**  
-[Site Address](https://google.com)
+[Site Address](https://google.com/search)
