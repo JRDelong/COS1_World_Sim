@@ -81,7 +81,7 @@ public:
 	bool HasActiveModifier(const std::string& modifierId)const;
 
 	int GetOverseerPoints() const;
-	boolSpendOverseerPoints(int amount);
+	bool SpendOverseerPoints(int amount);
 
 	int GetCurrentTick() const;
 
