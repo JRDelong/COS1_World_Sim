@@ -3,7 +3,6 @@
 
 World_Creation::World_Creation(const std::string& name, unsigned long long startingOP)
     : m_worldName(name), m_worldEra(1), m_overseerPoints(startingOP), m_tickCount(0) {
-    InitializeAchievements();
 }
 
 void World_Creation::AdvanceTime(int ticks) {
@@ -12,7 +11,6 @@ void World_Creation::AdvanceTime(int ticks) {
         for (size_t i = 0; i < m_biomes.size(); ++i) {
             m_biomes[i].ProcessTick();
         }
-        CheckAchievements();
     }
     std::cout << "\n>> Time advanced by " << ticks << " epoch(s). Overseer Points: " << m_overseerPoints << " OP\n";
 }
@@ -25,7 +23,6 @@ bool World_Creation::CreateBiome(const Biome& newBiome, unsigned long long cost)
     m_overseerPoints -= cost;
     m_biomes.push_back(newBiome);
     std::cout << "\n[+] Manifested " << newBiome.GetName() << " [" << newBiome.GetTrait() << "]!\n";
-    CheckAchievements();
     return true;
 }
 
@@ -48,7 +45,6 @@ bool World_Creation::UpgradeBiome(int index) {
     m_overseerPoints -= cost;
     m_biomes[index].UpgradeTier();
     std::cout << "\n[+] Upgraded " << m_biomes[index].GetName() << " to Tier " << m_biomes[index].GetTier() << "!\n";
-    CheckAchievements();
     return true;
 }
 
@@ -76,7 +72,6 @@ bool World_Creation::SeedSentientRace(int biomeIndex, const Race& newRace, unsig
     std::cout << "\n[+] Sparked Sentient Life! The " << newRace.GetName()
         << " (" << newRace.GetTrait() << ") have awakened in "
         << m_biomes[biomeIndex].GetName() << "!\n";
-    CheckAchievements();
     return true;
 }
 
@@ -103,15 +98,5 @@ void World_Creation::DisplayStatus() const {
     std::cout << "======================================================\n";
 }
 
-void World_Creation::DisplayAchievements() const {
-    std::cout << "\n================ OVERSEER ACHIEVEMENTS ================\n";
-    for (size_t i = 0; i < m_achievements.size(); ++i) {
-        std::string status = m_achievements[i].unlocked ? "[UNLOCKED]" : "[LOCKED]  ";
-        std::cout << " " << status << " " << m_achievements[i].title
-            << " (+" << m_achievements[i].rewardOP << " OP)\n"
-            << "            -> " << m_achievements[i].description << "\n";
-    }
-    std::cout << "=======================================================\n";
-}
 
 

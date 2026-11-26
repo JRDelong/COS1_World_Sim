@@ -19,9 +19,6 @@ private:
     std::vector<Biome> m_biomes;
     std::vector<Achievement> m_achievements;
 
-    void InitializeAchievements();
-    void CheckAchievements();
-
 public:
     World_Creation(const std::string& name, unsigned long long startingOP);
 
