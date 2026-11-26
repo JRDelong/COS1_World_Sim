@@ -139,25 +139,24 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Achievement.cpp" />
-    <ClCompile Include="Biome.cpp" />
-    <ClCompile Include="DeLong_Jacob_Cos1_World_Sim.cpp" />
-    <ClCompile Include="Player.cpp" />
-    <ClCompile Include="Race.cpp" />
-    <ClCompile Include="Sim.cpp" />
-    <ClCompile Include="Store.cpp" />
-    <ClCompile Include="Sys_creation.cpp" />
-    <ClCompile Include="World_Creation.cpp" />
+    <ClInclude Include="Headers\Achievement.h" />
+    <ClInclude Include="Headers\Biome.h" />
+    <ClInclude Include="Headers\Player.h" />
+    <ClInclude Include="Headers\Race.h" />
+    <ClInclude Include="Headers\Sim.h" />
+    <ClInclude Include="Headers\Store.h" />
+    <ClInclude Include="Headers\Sys_creation.h" />
+    <ClInclude Include="Headers\World_Creation.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Achievement.h" />
-    <ClInclude Include="Biome.h" />
-    <ClInclude Include="Player.h" />
-    <ClInclude Include="Race.h" />
-    <ClInclude Include="Sim.h" />
-    <ClInclude Include="Store.h" />
-    <ClInclude Include="Sys_creation.h" />
-    <ClInclude Include="World_Creation.h" />
+    <ClCompile Include="Source\Achievement.cpp" />
+    <ClCompile Include="Source\Biome.cpp" />
+    <ClCompile Include="Source\Player.cpp" />
+    <ClCompile Include="Source\Race.cpp" />
+    <ClCompile Include="Source\Sim.cpp" />
+    <ClCompile Include="Source\Store.cpp" />
+    <ClCompile Include="Source\Sys_creation.cpp" />
+    <ClCompile Include="Source\World_Creation.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
