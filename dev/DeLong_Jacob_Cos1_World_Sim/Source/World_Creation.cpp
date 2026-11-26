@@ -1,102 +1,179 @@
 #include "World_Creation.h"
+#include <cstdlib>
 #include <iostream>
+#include <vector>
 
-World_Creation::World_Creation(const std::string& name, unsigned long long startingOP)
-    : m_worldName(name), m_worldEra(1), m_overseerPoints(startingOP), m_tickCount(0) {
+bool World_Creation::RunGenesis(Sim& sim, Player& overseer) {
+    if (!RunBiomeStep(sim, overseer)) {
+        return false;
+    }
+    return RunRaceStep(sim, overseer);
 }
 
-void World_Creation::AdvanceTime(int ticks) {
-    for (int t = 0; t < ticks; ++t) {
-        m_tickCount++;
-        for (size_t i = 0; i < m_biomes.size(); ++i) {
-            m_biomes[i].ProcessTick();
+bool World_Creation::RunBiomeStep(Sim& sim, Player& overseer) {
+    std::vector<BiomePreset> biomeCatalog = Biome::GetStarterCatalog();
+    std::string statusMsg;
+
+    while (true) {
+        ClearConsole();
+        std::cout << "=================================================================\n";
+        std::cout << "  WORLD GENESIS - STEP 1 OF 2: MANIFEST A BIOME\n";
+        std::cout << "  Overseer Points: " << overseer.GetOverseerPoints() << " OP"
+            << "  |  Biomes Created: " << sim.GetSectors().size() << "\n";
+        std::cout << "=================================================================\n\n";
+        std::cout << "  The world is currently an empty void. Manifest at least one\n";
+        std::cout << "  biome before awakening sentient life.\n\n";
+
+        for (size_t i = 0; i < biomeCatalog.size(); ++i) {
+            std::cout << "  [" << (i + 1) << "] " << biomeCatalog[i].name
+                << " (" << Biome::ToString(biomeCatalog[i].type) << ") - "
+                << biomeCatalog[i].costOP << " OP\n"
+                << "      " << biomeCatalog[i].summary << "\n\n";
+        }
+
+        if (sim.HasAnySector()) {
+            std::cout << "  [C] Continue to Step 2 (Awaken Sentient Race)\n";
+        }
+        std::cout << "  [Q] Cancel & Return to Main Menu\n";
+        std::cout << "-----------------------------------------------------------------\n";
+
+        if (!statusMsg.empty()) {
+            std::cout << ">> " << statusMsg << "\n\n";
+        }
+
+        std::cout << "Select an option: ";
+        std::string input;
+        if (!std::getline(std::cin, input)) {
+            return false;
+        }
+
+        if (input == "q" || input == "Q") {
+            return false;
+        }
+        if ((input == "c" || input == "C") && sim.HasAnySector()) {
+            return true;
+        }
+
+        char* endPtr = nullptr;
+        long choice = std::strtol(input.c_str(), &endPtr, 10);
+        if (endPtr != input.c_str() && *endPtr == '\0' && choice >= 1 && choice <= static_cast<long>(biomeCatalog.size())) {
+            const BiomePreset& selected = biomeCatalog[choice - 1];
+            if (!overseer.SpendPoints(selected.costOP)) {
+                statusMsg = "Insufficient Overseer Points! Need " + std::to_string(selected.costOP) + " OP.";
+            }
+            else {
+                std::string uniqueName = selected.name + " #" + std::to_string(sim.GetSectors().size() + 1);
+                sim.AddSector(uniqueName, selected.type, selected.initialFood, selected.initialMaterials);
+                statusMsg = "Manifested " + uniqueName + "! Buy another biome or press [C] to continue.";
+            }
+        }
+        else {
+            statusMsg = sim.HasAnySector()
+                ? "Enter a biome number, [C] to continue, or [Q] to cancel."
+                : "You must buy at least one biome first!";
         }
     }
-    std::cout << "\n>> Time advanced by " << ticks << " epoch(s). Overseer Points: " << m_overseerPoints << " OP\n";
 }
 
-bool World_Creation::CreateBiome(const Biome& newBiome, unsigned long long cost) {
-    if (m_overseerPoints < cost) {
-        std::cout << "\n[!] Not enough Overseer Points! Need " << cost << " OP.\n";
-        return false;
-    }
-    m_overseerPoints -= cost;
-    m_biomes.push_back(newBiome);
-    std::cout << "\n[+] Manifested " << newBiome.GetName() << " [" << newBiome.GetTrait() << "]!\n";
-    return true;
-}
+bool World_Creation::RunRaceStep(Sim& sim, Player& overseer) {
+    std::vector<RacePreset> raceCatalog = Race::GetStarterCatalog();
+    std::string statusMsg;
 
-bool World_Creation::UpgradeBiome(int index) {
-    if (m_biomes.empty()) {
-        std::cout << "\n[!] No biomes exist yet. Manifest a biome first!\n";
-        return false;
-    }
-    if (index < 0 || index >= static_cast<int>(m_biomes.size())) {
-        std::cout << "\n[!] Invalid biome index. Valid range: 0 to " << (m_biomes.size() - 1) << ".\n";
-        return false;
-    }
+    while (true) {
+        ClearConsole();
+        const std::vector<Sector>& sectors = sim.GetSectors();
 
-    unsigned long long cost = m_biomes[index].GetUpgradeCost();
-    if (m_overseerPoints < cost) {
-        std::cout << "\n[!] Insufficient Overseer Points. Upgrade requires " << cost << " OP.\n";
-        return false;
-    }
+        int unclaimedCount = 0;
+        for (size_t i = 0; i < sectors.size(); ++i) {
+            if (sectors[i].ownerAgentId == -1) {
+                ++unclaimedCount;
+            }
+        }
 
-    m_overseerPoints -= cost;
-    m_biomes[index].UpgradeTier();
-    std::cout << "\n[+] Upgraded " << m_biomes[index].GetName() << " to Tier " << m_biomes[index].GetTier() << "!\n";
-    return true;
-}
+        std::cout << "=================================================================\n";
+        std::cout << "  WORLD GENESIS - STEP 2 OF 2: AWAKEN A SENTIENT RACE\n";
+        std::cout << "  Overseer Points: " << overseer.GetOverseerPoints() << " OP"
+            << "  |  Races Awakened: " << sim.GetAgents().size()
+            << "  |  Open Sectors: " << unclaimedCount << "\n";
+        std::cout << "=================================================================\n\n";
+        std::cout << "  Awaken at least one sentient race in an unclaimed biome sector\n";
+        std::cout << "  to begin watching the world evolve.\n\n";
 
-bool World_Creation::SeedSentientRace(int biomeIndex, const Race& newRace, unsigned long long cost) {
-    if (m_biomes.empty()) {
-        std::cout << "\n[!] No biomes exist yet. Manifest a biome first!\n";
-        return false;
-    }
-    if (biomeIndex < 0 || biomeIndex >= static_cast<int>(m_biomes.size())) {
-        std::cout << "\n[!] Invalid biome index. Valid range: 0 to " << (m_biomes.size() - 1) << ".\n";
-        return false;
-    }
-    if (m_biomes[biomeIndex].HasSentientRace()) {
-        std::cout << "\n[!] That biome already hosts a sentient civilization!\n";
-        return false;
-    }
-    if (m_overseerPoints < cost) {
-        std::cout << "\n[!] Not enough Overseer Points! Awakening " << newRace.GetName()
-            << " requires " << cost << " OP.\n";
-        return false;
-    }
+        for (size_t i = 0; i < raceCatalog.size(); ++i) {
+            std::cout << "  [" << (i + 1) << "] " << raceCatalog[i].factionName
+                << " (" << raceCatalog[i].speciesName << " | Prefers: "
+                << Biome::ToString(raceCatalog[i].preferredBiome) << ") - "
+                << raceCatalog[i].costOP << " OP\n"
+                << "      " << raceCatalog[i].summary << "\n\n";
+        }
 
-    m_overseerPoints -= cost;
-    m_biomes[biomeIndex].SeedRace(newRace);
-    std::cout << "\n[+] Sparked Sentient Life! The " << newRace.GetName()
-        << " (" << newRace.GetTrait() << ") have awakened in "
-        << m_biomes[biomeIndex].GetName() << "!\n";
-    return true;
-}
+        if (sim.HasAnyAgent()) {
+            std::cout << "  [S] Start World Observation\n";
+        }
+        std::cout << "  [Q] Cancel & Return to Main Menu\n";
+        std::cout << "-----------------------------------------------------------------\n";
 
-void World_Creation::DisplayStatus() const {
-    std::cout << "\n======================================================\n";
-    std::cout << " WORLD: " << m_worldName << " | EPOCH: " << m_tickCount << "\n";
-    std::cout << " OVERSEER POINTS: " << m_overseerPoints << " OP\n";
-    std::cout << "======================================================\n";
+        if (!statusMsg.empty()) {
+            std::cout << ">> " << statusMsg << "\n\n";
+        }
 
-    if (m_biomes.empty()) {
-        std::cout << " No biomes manifested yet. The world is barren.\n";
-    }
-    else {
-        for (size_t i = 0; i < m_biomes.size(); ++i) {
-            std::cout << " [" << i << "] " << m_biomes[i].GetName()
-                << " (Tier " << m_biomes[i].GetTier() << " | Trait: " << m_biomes[i].GetTrait() << ")\n"
-                << "     Bonus: " << m_biomes[i].GetBonusDesc() << " | Flaw: " << m_biomes[i].GetFlawDesc() << "\n"
-                << "     Ecosystem Pop: " << m_biomes[i].GetWildLifePop() << "/" << m_biomes[i].GetPopulationCap()
-                << " | Civ Power: " << m_biomes[i].CalculateBiomePower()
-                << " | Upgrade Cost: " << m_biomes[i].GetUpgradeCost() << " OP\n"
-                << "     Sentient Life: " << m_biomes[i].GetRaceSummary() << "\n";
+        std::cout << "Select an option: ";
+        std::string input;
+        if (!std::getline(std::cin, input)) {
+            return false;
+        }
+
+        if (input == "q" || input == "Q") {
+            return false;
+        }
+        if ((input == "s" || input == "S") && sim.HasAnyAgent()) {
+            return true;
+        }
+
+        char* endPtr = nullptr;
+        long choice = std::strtol(input.c_str(), &endPtr, 10);
+        if (endPtr != input.c_str() && *endPtr == '\0' && choice >= 1 && choice <= static_cast<long>(raceCatalog.size())) {
+            if (unclaimedCount == 0) {
+                statusMsg = "No unclaimed biomes left! Press [S] to begin observation.";
+                continue;
+            }
+
+            const RacePreset& selected = raceCatalog[choice - 1];
+            if (overseer.GetOverseerPoints() < selected.costOP) {
+                statusMsg = "Insufficient Overseer Points! Need " + std::to_string(selected.costOP) + " OP.";
+                continue;
+            }
+
+            int chosenSectorId = -1;
+            for (size_t i = 0; i < sectors.size(); ++i) {
+                if (sectors[i].ownerAgentId == -1) {
+                    if (chosenSectorId == -1) {
+                        chosenSectorId = sectors[i].id;
+                    }
+                    if (sectors[i].biome == selected.preferredBiome) {
+                        chosenSectorId = sectors[i].id;
+                        break;
+                    }
+                }
+            }
+
+            if (chosenSectorId != -1 && overseer.SpendPoints(selected.costOP)) {
+                sim.AddAgent(selected.factionName, selected.speciesName, selected.preferredBiome, chosenSectorId);
+                statusMsg = "Awakened " + selected.factionName + " in " + sectors[chosenSectorId].name + "! Press [S] to begin or add another.";
+            }
+        }
+        else {
+            statusMsg = sim.HasAnyAgent()
+                ? "Enter a race number, [S] to start observation, or [Q] to cancel."
+                : "You must awaken at least one race before starting!";
         }
     }
-    std::cout << "======================================================\n";
 }
+
+void World_Creation::ClearConsole() const {
+    std::system("cls");
+}
+
 
 
 

@@ -1,17 +1,11 @@
-#ifndef SIM_H
-#define SIM_H
+#pragma once
 
 #include "Achievement.h"
+#include "Biome.h"
+#include "MainMenu.h"
+#include "Player.h"
 #include <string>
 #include <vector>
-
-enum class BiomeType {
-    Forest,
-    Plains,
-    Mountains,
-    Desert,
-    Wetlands
-};
 
 enum class AgentGoal {
     Forage,
@@ -79,18 +73,30 @@ class Sim {
 public:
     Sim();
 
-    void AdvanceTicks(int tickCount);
-    void StepSingleTick();
+    // Live Observer Console session (called from main.cpp after World_Creation)
+    void RunObserverSession(Player& overseer, const GameSettings& settings);
 
+    // Core autonomous simulation loop
+    void AdvanceTicks(int tickCount, Player* overseer = nullptr);
+    void StepSingleTick(Player* overseer = nullptr);
+
+    // World creation
     void AddSector(const std::string& name, BiomeType biome, int food, int materials);
-    void AddAgent(const std::string& name, const std::string& species, BiomeType preferredBiome, int startSectorId);
+    void AddAgent(const std::string& name,
+        const std::string& species,
+        BiomeType preferredBiome,
+        int startSectorId,
+        int startingAggression = 30,
+        int startingAdaptability = 50,
+        Player* overseer = nullptr);
 
+    // Indirect World Changes (Laws & Abilities)
     void ApplyWorldModifier(const WorldModifier& modifier);
     bool HasActiveModifier(const std::string& modifierId) const;
 
-    int GetOverseerPoints() const;
-    bool SpendOverseerPoints(int amount);
-
+    // State & Log inspection
+    bool HasAnySector() const;
+    bool HasAnyAgent() const;
     int GetCurrentTick() const;
     const std::vector<Sector>& GetSectors() const;
     const std::vector<Agent>& GetAgents() const;
@@ -100,7 +106,6 @@ public:
 
 private:
     int currentTick = 0;
-    int overseerPoints = 0;
 
     int totalExpansions = 0;
     int totalTrades = 0;
@@ -113,24 +118,36 @@ private:
     std::vector<SimEvent> eventLog;
     Achievement achievement;
 
+    // Autonomous tick stages
     void UpdateModifiers();
     void UpdateResources();
     void EvaluateAgentNeeds(Agent& agent);
     void ExecuteAgentAction(Agent& agent);
     void UpdatePopulationAndTraits(Agent& agent);
-    void ProcessAchievements();
+    void ProcessAchievements(Player* overseer);
 
+    // Aggregated modifier queries
     int GetTotalFoodRegenMod() const;
     int GetTotalMaterialRegenMod() const;
     int GetTotalAggressionDriftMod() const;
     int GetTotalTradeBonusMod() const;
     int GetTotalHarmonyMod() const;
 
+    // Observer Console UI helpers
+    void RenderHUD(const Player& overseer, const GameSettings& settings) const;
+    void RenderAchievementsScreen(const Player& overseer) const;
+    std::string GoalToString(AgentGoal goal) const;
+    std::string CategoryTag(EventCategory cat) const;
+    void ClearConsole() const;
+    void PauseForEnter(const std::string& prompt = "Press Enter to return...") const;
+
+    // Simulation helpers
     int CalculateBiomeHarmony(const Agent& agent, const Sector& sector) const;
     void LogEvent(EventCategory category, const std::string& text);
     int ClampValue(int value, int minVal, int maxVal) const;
 };
 
-#endif 
+
+
 
 

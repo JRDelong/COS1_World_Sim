@@ -1,98 +1,46 @@
 #include "Biome.h"
 
-Biome::Biome(const std::string& name,
-    const std::string& trait,
-    const std::string& bonusDesc,
-    const std::string& flawDesc,
-    unsigned long long habitability,
-    int prosperityModifierPercent,
-    int capModifierPercent)
-    : m_name(name),
-    m_trait(trait),
-    m_bonusDesc(bonusDesc),
-    m_flawDesc(flawDesc),
-    m_tier(1),
-    m_wildLifePop(10),
-    m_habitability(habitability),
-    m_prosperityModifierPercent(prosperityModifierPercent),
-    m_capModifierPercent(capModifierPercent) {
+std::vector<BiomePreset> Biome::GetStarterCatalog() {
+    std::vector<BiomePreset> catalog;
+    catalog.push_back({ "Emerald Reach", BiomeType::Forest, 80, 40, 200, "High food regen, moderate timber" });
+    catalog.push_back({ "Sunlit Steppe", BiomeType::Plains, 75, 35, 200, "Balanced food & open frontier" });
+    catalog.push_back({ "Ironcrag Peaks", BiomeType::Mountains, 25, 90, 250, "High material regen, low food" });
+    catalog.push_back({ "Misty Wetlands", BiomeType::Wetlands, 65, 45, 225, "Steady food & marsh resources" });
+    catalog.push_back({ "Ashen Dunes", BiomeType::Desert, 15, 50, 175, "Harsh climate, moderate minerals" });
+    return catalog;
 }
 
-unsigned long long Biome::GetPopulationCap() const {
-    unsigned long long cap = 1000;
-    for (int i = 1; i < m_tier; ++i) {
-        cap *= 10;
+std::string Biome::ToString(BiomeType type) {
+    switch (type) {
+    case BiomeType::Forest:    return "Forest";
+    case BiomeType::Plains:    return "Plains";
+    case BiomeType::Mountains: return "Mountains";
+    case BiomeType::Desert:    return "Desert";
+    case BiomeType::Wetlands:  return "Wetlands";
     }
-    return (cap * m_capModifierPercent) / 100;
+    return "Unknown";
 }
 
-void Biome::ProcessTick() {
-    unsigned long long cap = GetPopulationCap();
-
-    if (m_wildLifePop < cap) {
-        unsigned long long growth = (m_wildLifePop * m_habitability) / 100;
-        if (growth == 0) growth = 1;
-        m_wildLifePop += growth;
-        if (m_wildLifePop > cap) {
-            m_wildLifePop = cap;
-        }
+int Biome::GetBaseFoodRegen(BiomeType type) {
+    switch (type) {
+    case BiomeType::Forest:    return 7;
+    case BiomeType::Plains:    return 7;
+    case BiomeType::Mountains: return 2;
+    case BiomeType::Desert:    return 1;
+    case BiomeType::Wetlands:  return 5;
     }
+    return 4;
+}
 
-    if (!m_races.empty()) {
-        m_races.front().ProcessTick(m_habitability, cap);
+int Biome::GetBaseMaterialRegen(BiomeType type) {
+    switch (type) {
+    case BiomeType::Forest:    return 3;
+    case BiomeType::Plains:    return 2;
+    case BiomeType::Mountains: return 6;
+    case BiomeType::Desert:    return 3;
+    case BiomeType::Wetlands:  return 3;
     }
-}
-
-unsigned long long Biome::CalculateBiomePower() const {
-    unsigned long long power = (m_wildLifePop / 5) * m_tier;
-    if (!m_races.empty()) {
-        power += m_races.front().CalculateCivPower(m_name);
-    }
-    return (power * m_prosperityModifierPercent) / 100;
-}
-
-unsigned long long Biome::GetUpgradeCost() const {
-    unsigned long long cost = 500;
-    for (int i = 1; i < m_tier; ++i) {
-        cost *= 4;
-    }
-    return cost;
-}
-
-bool Biome::UpgradeTier() {
-    m_tier++;
-    return true;
-}
-
-bool Biome::SeedRace(const Race& newRace) {
-    if (!m_races.empty()) {
-        return false;
-    }
-    m_races.push_back(newRace);
-    return true;
-}
-
-unsigned long long Biome::GetSentientPop() const {
-    return m_races.empty() ? 0 : m_races.front().GetPopulation();
-}
-
-int Biome::GetSentientCivLevel() const {
-    return m_races.empty() ? 0 : m_races.front().GetCivLevel();
-}
-
-bool Biome::IsRaceInPreferredBiome() const {
-    return !m_races.empty() && (m_races.front().GetPreferredBiome() == m_name);
-}
-
-std::string Biome::GetRaceSummary() const {
-    if (m_races.empty()) {
-        return "None (Uninhabited Wilderness)";
-    }
-    const Race& r = m_races.front();
-    std::string harmony = (r.GetPreferredBiome() == m_name) ? " [Preferred Biome +25%]" : "";
-    return r.GetName() + " [" + r.GetTrait() + "] - " + r.GetCivEraName() +
-        " (Pop: " + std::to_string(r.GetPopulation()) + ")" + harmony +
-        "\n       Race Bonus: " + r.GetBonusDesc() + " | Race Flaw: " + r.GetFlawDesc();
+    return 2;
 }
 
 

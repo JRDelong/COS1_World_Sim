@@ -1,25 +1,63 @@
 #include "Sim.h"
 #include <algorithm>
+#include <cstdlib>
+#include <iostream>
 
 Sim::Sim()
     : currentTick(0),
-    overseerPoints(0),
     totalExpansions(0),
     totalTrades(0),
     totalRaids(0),
     totalAdaptations(0) {
 }
 
-void Sim::AdvanceTicks(int tickCount) {
+void Sim::RunObserverSession(Player& overseer, const GameSettings& settings) {
+    ProcessAchievements(&overseer);
+
+    bool running = true;
+    while (running) {
+        RenderHUD(overseer, settings);
+
+        std::string input;
+        if (!std::getline(std::cin, input)) {
+            break;
+        }
+
+        if (input.empty()) {
+            StepSingleTick(&overseer);
+        }
+        else if (input == "f" || input == "F") {
+            AdvanceTicks(settings.fastForwardStep, &overseer);
+        }
+        else if (input == "a" || input == "A") {
+            RenderAchievementsScreen(overseer);
+        }
+        else if (input == "q" || input == "Q") {
+            running = false;
+        }
+        else {
+            char* endPtr = nullptr;
+            long ticks = std::strtol(input.c_str(), &endPtr, 10);
+            if (endPtr != input.c_str() && *endPtr == '\0' && ticks > 0) {
+                if (ticks > 500) {
+                    ticks = 500;
+                }
+                AdvanceTicks(static_cast<int>(ticks), &overseer);
+            }
+        }
+    }
+}
+
+void Sim::AdvanceTicks(int tickCount, Player* overseer) {
     if (tickCount <= 0) {
         return;
     }
     for (int i = 0; i < tickCount; ++i) {
-        StepSingleTick();
+        StepSingleTick(overseer);
     }
 }
 
-void Sim::StepSingleTick() {
+void Sim::StepSingleTick(Player* overseer) {
     ++currentTick;
 
     UpdateModifiers();
@@ -41,7 +79,7 @@ void Sim::StepSingleTick() {
         UpdatePopulationAndTraits(agents[i]);
     }
 
-    ProcessAchievements();
+    ProcessAchievements(overseer);
 }
 
 void Sim::AddSector(const std::string& name, BiomeType biome, int food, int materials) {
@@ -57,7 +95,13 @@ void Sim::AddSector(const std::string& name, BiomeType biome, int food, int mate
     LogEvent(EventCategory::Nature, "A new region formed in the world: " + name + ".");
 }
 
-void Sim::AddAgent(const std::string& name, const std::string& species, BiomeType preferredBiome, int startSectorId) {
+void Sim::AddAgent(const std::string& name,
+    const std::string& species,
+    BiomeType preferredBiome,
+    int startSectorId,
+    int startingAggression,
+    int startingAdaptability,
+    Player* overseer) {
     if (startSectorId < 0 || startSectorId >= static_cast<int>(sectors.size())) {
         return;
     }
@@ -73,8 +117,8 @@ void Sim::AddAgent(const std::string& name, const std::string& species, BiomeTyp
     newAgent.population = 20;
     newAgent.food = 40;
     newAgent.materials = 20;
-    newAgent.aggression = 30;
-    newAgent.adaptability = 50;
+    newAgent.aggression = ClampValue(startingAggression, 0, 100);
+    newAgent.adaptability = ClampValue(startingAdaptability, 0, 100);
     newAgent.homeSectorId = startSectorId;
     newAgent.currentGoal = AgentGoal::Forage;
     newAgent.targetSectorId = startSectorId;
@@ -82,8 +126,9 @@ void Sim::AddAgent(const std::string& name, const std::string& species, BiomeTyp
     sectors[startSectorId].ownerAgentId = newAgent.id;
     agents.push_back(newAgent);
 
-    LogEvent(EventCategory::Civilization, newAgent.name + " (" + newAgent.species + ") arose in " + sectors[startSectorId].name + ".");
-    ProcessAchievements();
+    LogEvent(EventCategory::Civilization,
+        newAgent.name + " (" + newAgent.species + ") arose in " + sectors[startSectorId].name + ".");
+    ProcessAchievements(overseer);
 }
 
 void Sim::ApplyWorldModifier(const WorldModifier& modifier) {
@@ -103,7 +148,8 @@ void Sim::ApplyWorldModifier(const WorldModifier& modifier) {
         LogEvent(EventCategory::WorldLaw, "A new World Law was etched into reality: " + modifier.name + ".");
     }
     else {
-        LogEvent(EventCategory::WorldLaw, "World phenomenon began: " + modifier.name + " (" + std::to_string(modifier.remainingTicks) + " ticks).");
+        LogEvent(EventCategory::WorldLaw,
+            "World phenomenon began: " + modifier.name + " (" + std::to_string(modifier.remainingTicks) + " ticks).");
     }
 }
 
@@ -116,16 +162,12 @@ bool Sim::HasActiveModifier(const std::string& modifierId) const {
     return false;
 }
 
-int Sim::GetOverseerPoints() const {
-    return overseerPoints;
+bool Sim::HasAnySector() const {
+    return !sectors.empty();
 }
 
-bool Sim::SpendOverseerPoints(int amount) {
-    if (amount < 0 || overseerPoints < amount) {
-        return false;
-    }
-    overseerPoints -= amount;
-    return true;
+bool Sim::HasAnyAgent() const {
+    return !agents.empty();
 }
 
 int Sim::GetCurrentTick() const {
@@ -181,20 +223,8 @@ void Sim::UpdateResources() {
     int globalMatMod = GetTotalMaterialRegenMod();
 
     for (size_t i = 0; i < sectors.size(); ++i) {
-        int foodRegen = 4;
-        int matRegen = 2;
-
-        if (sectors[i].biome == BiomeType::Forest || sectors[i].biome == BiomeType::Plains) {
-            foodRegen = 7;
-        }
-        else if (sectors[i].biome == BiomeType::Mountains) {
-            foodRegen = 2;
-            matRegen = 6;
-        }
-        else if (sectors[i].biome == BiomeType::Desert) {
-            foodRegen = 1;
-            matRegen = 3;
-        }
+        int foodRegen = Biome::GetBaseFoodRegen(sectors[i].biome);
+        int matRegen = Biome::GetBaseMaterialRegen(sectors[i].biome);
 
         int finalFoodRegen = std::max(0, foodRegen + globalFoodMod);
         int finalMatRegen = std::max(0, matRegen + globalMatMod);
@@ -293,7 +323,6 @@ void Sim::ExecuteAgentAction(Agent& agent) {
         agent.food += gathered;
         break;
     }
-
     case AgentGoal::Expand: {
         if (target.ownerAgentId == -1 && agent.materials >= 20) {
             agent.materials -= 20;
@@ -303,7 +332,6 @@ void Sim::ExecuteAgentAction(Agent& agent) {
         }
         break;
     }
-
     case AgentGoal::Trade: {
         int partnerId = target.ownerAgentId;
         if (partnerId >= 0 && partnerId < static_cast<int>(agents.size()) && partnerId != agent.id) {
@@ -320,30 +348,25 @@ void Sim::ExecuteAgentAction(Agent& agent) {
         }
         break;
     }
-
     case AgentGoal::Fortify: {
         int gatheredMat = std::min(target.materialSupply, 6 + (agent.population / 8));
         target.materialSupply -= gatheredMat;
         agent.materials += gatheredMat;
         break;
     }
-
     case AgentGoal::Raid: {
         int defenderId = target.ownerAgentId;
         if (defenderId >= 0 && defenderId < static_cast<int>(agents.size()) && defenderId != agent.id) {
             Agent& defender = agents[defenderId];
             ++totalRaids;
-
             int attackPower = agent.population + (agent.aggression / 5);
             int defensePower = defender.population + (defender.materials / 4);
-
             if (attackPower > defensePower) {
                 int stolenFood = std::min(defender.food, 20);
                 defender.food -= stolenFood;
                 agent.food += stolenFood;
                 defender.population = ClampValue(defender.population - 3, 0, 10000);
                 agent.population = ClampValue(agent.population - 1, 0, 10000);
-
                 if (defender.population == 0 || target.id != defender.homeSectorId) {
                     target.ownerAgentId = agent.id;
                     LogEvent(EventCategory::Conflict, agent.name + " raided and seized " + target.name + " from " + defender.name + "!");
@@ -362,13 +385,10 @@ void Sim::ExecuteAgentAction(Agent& agent) {
     }
     }
 }
-
 void Sim::UpdatePopulationAndTraits(Agent& agent) {
     int consumption = std::max(1, agent.population / 2);
-
     if (agent.food >= consumption) {
         agent.food -= consumption;
-
         if (agent.food > agent.population * 2) {
             agent.population += 2;
         }
@@ -381,7 +401,6 @@ void Sim::UpdatePopulationAndTraits(Agent& agent) {
         agent.food = 0;
         agent.population = ClampValue(agent.population - std::max(1, deficit), 0, 10000);
         agent.aggression = ClampValue(agent.aggression + 4, 0, 100);
-
         if (agent.population == 0) {
             LogEvent(EventCategory::Civilization, agent.name + " (" + agent.species + ") perished from famine.");
             for (size_t i = 0; i < sectors.size(); ++i) {
@@ -406,7 +425,7 @@ void Sim::UpdatePopulationAndTraits(Agent& agent) {
     }
 }
 
-void Sim::ProcessAchievements() {
+void Sim::ProcessAchievements(Player* overseer) {
     WorldMilestoneStats stats;
     stats.totalSectors = static_cast<int>(sectors.size());
     stats.totalExpansions = totalExpansions;
@@ -422,10 +441,11 @@ void Sim::ProcessAchievements() {
             }
         }
     }
-
     std::vector<AchievementItem> unlockedNow = achievement.Evaluate(stats);
     for (size_t i = 0; i < unlockedNow.size(); ++i) {
-        overseerPoints += unlockedNow[i].rewardPoints;
+        if (overseer != nullptr) {
+            overseer->EarnPoints(unlockedNow[i].rewardPoints);
+        }
         LogEvent(EventCategory::Achievement,
             unlockedNow[i].title + " - " + unlockedNow[i].description +
             " (+" + std::to_string(unlockedNow[i].rewardPoints) + " OP)");
@@ -472,23 +492,136 @@ int Sim::GetTotalHarmonyMod() const {
     return total;
 }
 
+void Sim::RenderHUD(const Player& overseer, const GameSettings& settings) const {
+    ClearConsole();
+    std::cout << "=================================================================\n";
+    std::cout << "  WORLD OVERSEER - OBSERVER CONSOLE\n";
+    std::cout << "  Tick: " << currentTick
+        << "  |  Overseer Points: " << overseer.GetOverseerPoints() << " OP"
+        << "  |  Achievements: " << achievement.GetUnlockedCount() << "/" << achievement.GetTotalCount() << "\n";
+    std::cout << "=================================================================\n";
+
+    std::cout << "\n[ACTIVE WORLD LAWS & PHENOMENA]\n";
+    if (activeModifiers.empty()) {
+        std::cout << "  None enacted yet.\n";
+    }
+    else {
+        for (size_t i = 0; i < activeModifiers.size(); ++i) {
+            std::cout << "  - " << activeModifiers[i].name;
+            if (!activeModifiers[i].isPermanent) {
+                std::cout << " (" << activeModifiers[i].remainingTicks << " ticks left)";
+            }
+            else {
+                std::cout << " (Permanent Law)";
+            }
+            std::cout << "\n";
+        }
+    }
+
+    std::cout << "\n[WORLD SECTORS]\n";
+    for (size_t i = 0; i < sectors.size(); ++i) {
+        std::string ownerName = "Unclaimed";
+        if (sectors[i].ownerAgentId >= 0 && sectors[i].ownerAgentId < static_cast<int>(agents.size())) {
+            ownerName = agents[sectors[i].ownerAgentId].name;
+        }
+        std::cout << "  #" << sectors[i].id << " " << sectors[i].name
+            << " (" << Biome::ToString(sectors[i].biome) << ")"
+            << " | Owner: " << ownerName
+            << " | Food: " << sectors[i].foodSupply
+            << " | Mat: " << sectors[i].materialSupply << "\n";
+    }
+
+    std::cout << "\n[CIVILIZATIONS]\n";
+    for (size_t i = 0; i < agents.size(); ++i) {
+        if (agents[i].population <= 0) {
+            std::cout << "  * " << agents[i].name << " (" << agents[i].species << ") - EXTINCT\n";
+            continue;
+        }
+        std::cout << "  * " << agents[i].name << " (" << agents[i].species << ")"
+            << " | Pop: " << agents[i].population
+            << " | Food: " << agents[i].food
+            << " | Mat: " << agents[i].materials
+            << " | Aggr: " << agents[i].aggression
+            << " | Goal: " << GoalToString(agents[i].currentGoal) << "\n";
+    }
+
+    std::cout << "\n[WORLD CHRONICLE - RECENT EVENTS]\n";
+    auto recent = GetRecentEvents(settings.defaultEventLogCount);
+    if (recent.empty()) {
+        std::cout << "  The world awaits its first spark...\n";
+    }
+    else {
+        for (size_t i = 0; i < recent.size(); ++i) {
+            std::cout << "  [T" << recent[i].tick << "] "
+                << CategoryTag(recent[i].category)
+                << recent[i].message << "\n";
+        }
+    }
+
+    std::cout << "\n-----------------------------------------------------------------\n";
+    std::cout << "  [Enter] +1 Tick | [F] +" << settings.fastForwardStep
+        << " Ticks | [Number] +N Ticks\n";
+    std::cout << "  [A] Achievements | [Q] Quit to Menu\n";
+    std::cout << "-----------------------------------------------------------------\n";
+    std::cout << "Command: ";
+}
+void Sim::RenderAchievementsScreen(const Player& overseer) const {
+    ClearConsole();
+    std::cout << "=================================================================\n";
+    std::cout << "  WORLD OVERSEER - ACHIEVEMENTS ("
+        << achievement.GetUnlockedCount() << " / " << achievement.GetTotalCount() << ")\n";
+    std::cout << "  Overseer Points Available: " << overseer.GetOverseerPoints() << " OP\n";
+    std::cout << "=================================================================\n\n";
+    const std::vector<AchievementItem>& items = achievement.GetAll();
+    for (size_t i = 0; i < items.size(); ++i) {
+        std::cout << (items[i].unlocked ? "[UNLOCKED] " : "[LOCKED]   ")
+            << items[i].title << " (+" << items[i].rewardPoints << " OP)\n"
+            << "           " << items[i].description << "\n\n";
+    }
+    PauseForEnter("Press Enter to return to the Observer View...");
+}
+std::string Sim::GoalToString(AgentGoal goal) const {
+    switch (goal) {
+    case AgentGoal::Forage:  return "Foraging";
+    case AgentGoal::Expand:  return "Expanding";
+    case AgentGoal::Trade:   return "Trading";
+    case AgentGoal::Fortify: return "Fortifying";
+    case AgentGoal::Raid:    return "Raiding";
+    }
+    return "Idle";
+}
+std::string Sim::CategoryTag(EventCategory cat) const {
+    switch (cat) {
+    case EventCategory::Civilization: return "[CIV] ";
+    case EventCategory::Conflict:     return "[WAR] ";
+    case EventCategory::Nature:       return "[NAT] ";
+    case EventCategory::WorldLaw:     return "[LAW] ";
+    case EventCategory::Achievement:  return "[ACH] ";
+    }
+    return "[LOG] ";
+}
+void Sim::ClearConsole() const {
+    std::system("cls");
+}
+void Sim::PauseForEnter(const std::string& prompt) const {
+    std::cout << "\n" << prompt;
+    std::string dummy;
+    std::getline(std::cin, dummy);
+}
 int Sim::CalculateBiomeHarmony(const Agent& agent, const Sector& sector) const {
     int baseHarmony = (agent.preferredBiome == sector.biome) ? 30 : (-20 + (agent.adaptability / 5));
     return baseHarmony + GetTotalHarmonyMod();
 }
-
 void Sim::LogEvent(EventCategory category, const std::string& text) {
     SimEvent entry;
     entry.tick = currentTick;
     entry.category = category;
     entry.message = text;
     eventLog.push_back(entry);
-
     if (eventLog.size() > 200) {
         eventLog.erase(eventLog.begin());
     }
 }
-
 int Sim::ClampValue(int value, int minVal, int maxVal) const {
     if (value < minVal) {
         return minVal;
@@ -498,6 +631,7 @@ int Sim::ClampValue(int value, int minVal, int maxVal) const {
     }
     return value;
 }
+
 
 
 

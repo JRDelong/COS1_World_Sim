@@ -151,11 +151,13 @@
     <ClInclude Include="Headers\Store.h" />
     <ClInclude Include="Headers\Sys_creation.h" />
     <ClInclude Include="Headers\World_Creation.h" />
+    <ClInclude Include="MainMenu.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="Source\Achievement.cpp" />
     <ClCompile Include="Source\Biome.cpp" />
+    <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Source\MainMenu.cpp" />
     <ClCompile Include="Source\Player.cpp" />
     <ClCompile Include="Source\Race.cpp" />
     <ClCompile Include="Source\Sim.cpp" />

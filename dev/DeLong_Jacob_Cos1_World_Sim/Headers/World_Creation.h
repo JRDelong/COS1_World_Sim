@@ -1,36 +1,25 @@
 #pragma once
-#include <string>
-#include <vector>
-#include "Biome.h"
 
-struct Achievement {
-    std::string title;
-    std::string description;
-    unsigned long long rewardOP;
-    bool unlocked;
-};
+#include "Biome.h"
+#include "Player.h"
+#include "Race.h"
+#include "Sim.h"
+#include <string>
 
 class World_Creation {
-private:
-    std::string m_worldName;
-    int m_worldEra;
-    unsigned long long m_overseerPoints;
-    unsigned long long m_tickCount;
-    std::vector<Biome> m_biomes;
-    std::vector<Achievement> m_achievements;
-
 public:
-    World_Creation(const std::string& name, unsigned long long startingOP);
+    World_Creation() = default;
 
-    void AdvanceTime(int ticks = 1);
-    bool CreateBiome(const Biome& newBiome, unsigned long long cost);
-    bool UpgradeBiome(int index);
-    bool SeedSentientRace(int biomeIndex, const Race& newRace, unsigned long long cost);
-    void DisplayStatus() const;
-    void DisplayAchievements() const;
-    unsigned long long GetOverseerPoints() const { return m_overseerPoints; }
+    // Runs Step 1 (Buy Biome) -> Step 2 (Buy Race). Returns true when ready to observe.
+    bool RunGenesis(Sim& sim, Player& overseer);
 
+private:
+    bool RunBiomeStep(Sim& sim, Player& overseer);
+    bool RunRaceStep(Sim& sim, Player& overseer);
+    void ClearConsole() const;
 };
+
+
 
 
 

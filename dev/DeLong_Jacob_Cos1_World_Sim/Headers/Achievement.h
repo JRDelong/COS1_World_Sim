@@ -1,6 +1,4 @@
-#ifndef ACHIEVEMENT_H
-#define ACHIEVEMENT_H
-
+#pragma once
 #include <string>
 #include <vector>
 
@@ -39,5 +37,4 @@ private:
     void RegisterDefaults();
 };
 
-#endif
 
