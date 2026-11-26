@@ -7,7 +7,7 @@ Update this document where indicated [look for the brackets!]. Replace text insi
 ## [ COS1]
 
 - **[ Jacob DeLong ]**
-- **[ Due Date ]**
+- **[ Nov 30th 2026 ]**
 
 This paper addresses some of the topic matter covered in research and activity this week. Be sure to include reference links below to the research and information you used to complete this assignment.
 
