@@ -31,7 +31,6 @@ public:
     unsigned long long GetPopulationCap() const;
     bool UpgradeTier();
 
-    // Sentient Life Methods
     bool HasSentientRace() const { return !m_races.empty(); }
     bool SeedRace(const Race& newRace);
     std::string GetRaceSummary() const;
@@ -39,7 +38,6 @@ public:
     int GetSentientCivLevel() const;
     bool IsRaceInPreferredBiome() const;
 
-    // Getters
     std::string GetName() const { return m_name; }
     std::string GetTrait() const { return m_trait; }
     std::string GetBonusDesc() const { return m_bonusDesc; }

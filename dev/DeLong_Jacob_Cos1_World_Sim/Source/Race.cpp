@@ -56,7 +56,6 @@ unsigned long long Race::CalculateCivPower(const std::string& currentBiomeName) 
     unsigned long long basePower = (m_population / 2) * static_cast<unsigned long long>(m_civLevel);
     unsigned long long modifiedPower = (basePower * static_cast<unsigned long long>(m_prosperityPercent)) / 100;
 
-    // +25% Harmony Bonus when placed in their Preferred Biome
     if (currentBiomeName == m_preferredBiome) {
         modifiedPower = (modifiedPower * 125) / 100;
     }
