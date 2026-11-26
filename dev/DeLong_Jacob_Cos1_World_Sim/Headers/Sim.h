@@ -9,6 +9,7 @@
 
 enum class AgentGoal {
     Forage,
+    Farm,
     Expand,
     Trade,
     Fortify,
@@ -47,6 +48,8 @@ struct Agent {
 
     AgentGoal currentGoal = AgentGoal::Forage;
     int targetSectorId = -1;
+    bool hasGuidance = false;
+    AgentGoal suggestedGoal = AgentGoal::Farm;
 };
 
 struct WorldModifier {
@@ -73,14 +76,11 @@ class Sim {
 public:
     Sim();
 
-    // Live Observer Console session (called from main.cpp after World_Creation)
     void RunObserverSession(Player& overseer, const GameSettings& settings);
 
-    // Core autonomous simulation loop
     void AdvanceTicks(int tickCount, Player* overseer = nullptr);
     void StepSingleTick(Player* overseer = nullptr);
 
-    // World creation
     void AddSector(const std::string& name, BiomeType biome, int food, int materials);
     void AddAgent(const std::string& name,
         const std::string& species,
@@ -90,11 +90,11 @@ public:
         int startingAdaptability = 50,
         Player* overseer = nullptr);
 
-    // Indirect World Changes (Laws & Abilities)
     void ApplyWorldModifier(const WorldModifier& modifier);
     bool HasActiveModifier(const std::string& modifierId) const;
 
-    // State & Log inspection
+    bool SuggestAgentGoal(int agentId, AgentGoal goal);
+
     bool HasAnySector() const;
     bool HasAnyAgent() const;
     int GetCurrentTick() const;
@@ -118,7 +118,6 @@ private:
     std::vector<SimEvent> eventLog;
     Achievement achievement;
 
-    // Autonomous tick stages
     void UpdateModifiers();
     void UpdateResources();
     void EvaluateAgentNeeds(Agent& agent);
@@ -126,14 +125,16 @@ private:
     void UpdatePopulationAndTraits(Agent& agent);
     void ProcessAchievements(Player* overseer);
 
-    // Aggregated modifier queries
     int GetTotalFoodRegenMod() const;
     int GetTotalMaterialRegenMod() const;
     int GetTotalAggressionDriftMod() const;
     int GetTotalTradeBonusMod() const;
     int GetTotalHarmonyMod() const;
 
-    // Observer Console UI helpers
+    void RenderGuidanceMenu();
+    bool TryApplyGuidance(Agent& agent);
+    int ComputeDeterministicRoll(int salt) const;
+
     void RenderHUD(const Player& overseer, const GameSettings& settings) const;
     void RenderAchievementsScreen(const Player& overseer) const;
     std::string GoalToString(AgentGoal goal) const;
@@ -141,7 +142,6 @@ private:
     void ClearConsole() const;
     void PauseForEnter(const std::string& prompt = "Press Enter to return...") const;
 
-    // Simulation helpers
     int CalculateBiomeHarmony(const Agent& agent, const Sector& sector) const;
     void LogEvent(EventCategory category, const std::string& text);
     int ClampValue(int value, int minVal, int maxVal) const;
